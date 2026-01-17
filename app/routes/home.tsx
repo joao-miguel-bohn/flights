@@ -58,13 +58,13 @@ export default function Home() {
       {/* Mobile toggle button */}
       <button
         onClick={() => setIsMobileListOpen(!isMobileListOpen)}
-        className="hidden md:hidden absolute top-4 right-4 z-[20001] bg-white border border-gray-200 rounded-lg px-4 py-2.5 cursor-pointer font-semibold text-sm shadow-md"
+        className="md:hidden absolute top-4 right-4 z-[20001] bg-white border border-gray-200 rounded-lg px-4 py-2.5 cursor-pointer font-semibold text-sm shadow-md"
       >
         {isMobileListOpen ? 'Hide' : 'Flights'} ({sortedFlights.length})
       </button>
 
       {/* Flight list sidebar */}
-      <div className={`w-[350px] h-full overflow-y-auto border-r border-gray-200 bg-white relative z-[999] ${isMobileListOpen ? 'mobile-open' : ''}`}>
+      <div className={`w-[350px] h-full overflow-y-auto border-r border-gray-200 bg-white relative z-[999] hidden md:block ${isMobileListOpen ? 'mobile-open' : ''}`}>
         <div className="p-4 border-b border-gray-200">
           <h2 className="m-0 text-lg font-bold">
             Flights ({sortedFlights.length})
