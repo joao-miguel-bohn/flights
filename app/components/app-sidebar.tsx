@@ -8,8 +8,8 @@ const items = [
     icon: Home,
   },
   {
-    title: "Estatísticas (Em breve)",
-    url: "#",
+    title: "Estatísticas",
+    url: "/stats",
     icon: ChartArea,
   },
 ]
