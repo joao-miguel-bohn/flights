@@ -54,45 +54,19 @@ export default function Home() {
     .filter(Boolean);
 
   return (
-    <div style={{ height: '96vh', width: '100%', display: 'flex', overflow: 'hidden', position: 'relative' }}>
+    <div className="map-container">
       {/* Mobile toggle button */}
       <button
         onClick={() => setIsMobileListOpen(!isMobileListOpen)}
-        style={{
-          position: 'absolute',
-          top: '16px',
-          left: '16px',
-          zIndex: 1000,
-          background: '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
-          padding: '10px 16px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          fontSize: '14px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          display: 'none'
-        }}
         className="mobile-toggle"
       >
         {isMobileListOpen ? 'Hide' : 'Flights'} ({sortedFlights.length})
       </button>
 
       {/* Flight list sidebar */}
-      <div 
-        style={{ 
-          width: '350px', 
-          height: '100%', 
-          overflowY: 'auto', 
-          borderRight: '1px solid #e5e7eb',
-          background: '#fff',
-          position: 'relative',
-          zIndex: 999
-        }}
-        className={`flight-sidebar ${isMobileListOpen ? 'mobile-open' : ''}`}
-      >
-        <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+      <div className={`flight-sidebar ${isMobileListOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <h2 className="sidebar-title">
             Flights ({sortedFlights.length})
           </h2>
         </div>
@@ -107,31 +81,25 @@ export default function Home() {
               <div
                 key={idx}
                 onClick={() => setSelectedFlight(isSelected ? null : flightId)}
-                style={{
-                  padding: '12px 16px',
-                  borderBottom: '1px solid #f3f4f6',
-                  cursor: 'pointer',
-                  background: isSelected ? '#eff6ff' : '#fff',
-                  transition: 'background 0.2s'
-                }}
+                className={`flight-item ${isSelected ? 'selected' : ''}`}
                 onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = '#f9fafb';
+                  if (!isSelected) e.currentTarget.classList.add('hover');
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = '#fff';
+                  if (!isSelected) e.currentTarget.classList.remove('hover');
                 }}
               >
-                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>
+                <div className="flight-number">
                   {flight.flightNumber}
                 </div>
-                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span className={`fi fi-${airport?.country.toLowerCase()}`} style={{ fontSize: '16px' }}></span>
+                <div className="flight-route">
+                  <span className={`fi fi-${airport?.country.toLowerCase()}`}></span>
                   <span>{airport?.city}</span>
                   <span>→</span>
-                  <span className={`fi fi-${destAirport?.country.toLowerCase()}`} style={{ fontSize: '16px' }}></span>
+                  <span className={`fi fi-${destAirport?.country.toLowerCase()}`}></span>
                   <span>{destAirport?.city}</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                <div className="flight-details">
                   {flight.date} • {flight.departureTime} • {flight.planeType}
                 </div>
               </div>
@@ -141,7 +109,7 @@ export default function Home() {
       </div>
 
       {/* Map */}
-      <div style={{ flex: 1, height: '100%' }}>
+      <div className="map-wrapper">
         <MapContainer 
           center={[25, 55]} 
           zoom={3} 
@@ -198,25 +166,128 @@ export default function Home() {
       </div>
 
       <style>{`
+        .map-container {
+          height: 96vh;
+          width: 100%;
+          display: flex;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .mobile-toggle {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 10001;
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 10px 16px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 14px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          display: none;
+        }
+
+        .flight-sidebar {
+          width: 350px;
+          height: 100%;
+          overflow-y: auto;
+          border-right: 1px solid #e5e7eb;
+          background: #fff;
+          position: relative;
+          z-index: 999;
+        }
+
+        .sidebar-header {
+          padding: 16px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-title {
+          margin: 0;
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        .flight-item {
+          padding: 12px 16px;
+          border-bottom: 1px solid #f3f4f6;
+          cursor: pointer;
+          background: #fff;
+          transition: background 0.2s;
+        }
+
+        .flight-item.selected {
+          background: #eff6ff;
+        }
+
+        .flight-item.hover {
+          background: #f9fafb;
+        }
+
+        .flight-number {
+          font-size: 14px;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+
+        .flight-route {
+          font-size: 13px;
+          color: #6b7280;
+          margin-bottom: 4px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .flight-route .fi {
+          font-size: 16px;
+        }
+
+        .flight-details {
+          font-size: 12px;
+          color: #9ca3af;
+        }
+
+        .map-wrapper {
+          flex: 1;
+          height: 100%;
+        }
+        
         @media (max-width: 768px) {
           .mobile-toggle {
             display: block !important;
+            z-index: 20001 !important;
           }
           
-          .flight-sidebar {
-            position: absolute !important;
-            top: 0;
-            left: 0;
-            width: 100% !important;
-            max-width: 100% !important;
-            height: 60vh !important;
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          .leaflet-container {
+            z-index: 1 !important;
+          }
+          
+          [data-vaul-drawer],
+          [data-vaul-drawer-wrapper],
+          .group\\/sidebar {
+            z-index: 100 !important;
+          }
+          
+          .flight-sidebar:not(.mobile-open) {
+            display: none !important;
           }
           
           .flight-sidebar.mobile-open {
-            transform: translateY(0);
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100vw !important;
+            height: 75vh !important;
+            z-index: 20000 !important;
+            overflow-y: auto !important;
+            border-right: none !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
           }
         }
       `}</style>
