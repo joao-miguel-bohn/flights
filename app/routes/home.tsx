@@ -15,6 +15,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [reactLeaflet, setReactLeaflet] = useState<any>(null);
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -53,15 +54,43 @@ export default function Home() {
     .filter(Boolean);
 
   return (
-    <div style={{ height: '96vh', width: '100%', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ height: '96vh', width: '100%', display: 'flex', overflow: 'hidden', position: 'relative' }}>
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setIsMobileListOpen(!isMobileListOpen)}
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: '16px',
+          zIndex: 1000,
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '10px 16px',
+          cursor: 'pointer',
+          fontWeight: '600',
+          fontSize: '14px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'none'
+        }}
+        className="mobile-toggle"
+      >
+        {isMobileListOpen ? 'Hide' : 'Flights'} ({sortedFlights.length})
+      </button>
+
       {/* Flight list sidebar */}
-      <div style={{ 
-        width: '350px', 
-        height: '100%', 
-        overflowY: 'auto', 
-        borderRight: '1px solid #e5e7eb',
-        background: '#fff'
-      }}>
+      <div 
+        style={{ 
+          width: '350px', 
+          height: '100%', 
+          overflowY: 'auto', 
+          borderRight: '1px solid #e5e7eb',
+          background: '#fff',
+          position: 'relative',
+          zIndex: 999
+        }}
+        className={`flight-sidebar ${isMobileListOpen ? 'mobile-open' : ''}`}
+      >
         <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
             Flights ({sortedFlights.length})
@@ -167,6 +196,30 @@ export default function Home() {
           ))}
         </MapContainer>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-toggle {
+            display: block !important;
+          }
+          
+          .flight-sidebar {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 60vh !important;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          }
+          
+          .flight-sidebar.mobile-open {
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
