@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { flights } from '../data/flights';
 import { airports } from '../data/airports';
 import type { Route } from "./+types/home";
@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Button } from '../components/ui/button';
 import { Calendar } from '../components/ui/calendar';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import 'flag-icons/css/flag-icons.min.css';
+import type { Airport } from '../types/airport';
+import { AIRCRAFT_TYPES, type AircraftType } from '../types/flight';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -17,12 +19,15 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+// Helper function to normalize dates to start of day
+const normalizeDate = (date: Date): Date => startOfDay(date);
+
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [reactLeaflet, setReactLeaflet] = useState<any>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
-  const [aircraftFilter, setAircraftFilter] = useState<'all' | 'A380' | '777'>('all');
+  const [aircraftFilter, setAircraftFilter] = useState<'all' | AircraftType>('all');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
@@ -34,36 +39,64 @@ export default function Home() {
     });
   }, []);
 
+  // Memoize airport lookup map
+  const airportMap = useMemo(() => {
+    return new Map(airports.map(a => [a.id, a]));
+  }, []);
+
   // Sort flights by date, most recent first
-  const sortedFlights = [...flights].sort((a, b) => {
-    return b.departureDateTime.getTime() - a.departureDateTime.getTime();
-  });
+  const sortedFlights = useMemo(() => {
+    return [...flights].sort((a, b) => {
+      return b.departureDateTime.getTime() - a.departureDateTime.getTime();
+    });
+  }, []);
 
   // Filter flights by aircraft type and date range
-  const filteredFlights = sortedFlights.filter(flight => {
-    // Aircraft filter
-    if (aircraftFilter !== 'all' && flight.planeType !== aircraftFilter) {
-      return false;
-    }
-    
-    // Date range filter
-    const flightDate = new Date(flight.departureDateTime);
-    flightDate.setHours(0, 0, 0, 0);
-    
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      if (flightDate < start) return false;
-    }
-    
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(0, 0, 0, 0);
-      if (flightDate > end) return false;
-    }
-    
-    return true;
-  });
+  const filteredFlights = useMemo(() => {
+    return sortedFlights.filter(flight => {
+      // Aircraft filter
+      if (aircraftFilter !== 'all' && flight.planeType !== aircraftFilter) {
+        return false;
+      }
+      
+      // Date range filter
+      if (startDate || endDate) {
+        const flightDate = normalizeDate(flight.departureDateTime);
+        
+        if (startDate && flightDate < normalizeDate(startDate)) {
+          return false;
+        }
+        
+        if (endDate && flightDate > normalizeDate(endDate)) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [sortedFlights, aircraftFilter, startDate, endDate]);
+
+  // Memoize used airports for markers
+  const usedAirports = useMemo(() => {
+    const airportSet = new Set<string>();
+    filteredFlights.forEach(flight => {
+      airportSet.add(flight.originAirport);
+      airportSet.add(flight.destinationAirport);
+    });
+    return airportSet;
+  }, [filteredFlights]);
+
+  const airportMarkers = useMemo(() => {
+    return Array.from(usedAirports)
+      .map(code => airportMap.get(code))
+      .filter((airport): airport is Airport => airport !== undefined);
+  }, [usedAirports, airportMap]);
+
+  // Clear dates handler
+  const handleClearDates = useCallback(() => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  }, []);
 
   if (!isClient || !reactLeaflet) {
     return (
@@ -74,19 +107,6 @@ export default function Home() {
   }
 
   const { MapContainer, TileLayer, Polyline, CircleMarker, Popup } = reactLeaflet;
-
-  // Map of airport codes to coordinates
-  const airportMap = new Map(airports.map(a => [a.id, a]));
-  
-  // Get unique airports that have flights (from filtered flights)
-  const usedAirports = new Set<string>();
-  filteredFlights.forEach(flight => {
-    usedAirports.add(flight.originAirport);
-    usedAirports.add(flight.destinationAirport);
-  });
-  const airportMarkers = Array.from(usedAirports)
-    .map(code => airportMap.get(code))
-    .filter(Boolean);
 
   return (
     <div className="h-[96vh] w-full flex overflow-hidden relative">
@@ -105,15 +125,16 @@ export default function Home() {
             Flights ({filteredFlights.length})
           </h2>
           
-          <Select value={aircraftFilter} onValueChange={(value) => setAircraftFilter(value as 'all' | 'A380' | '777')}>
+          <Select value={aircraftFilter} onValueChange={(value) => setAircraftFilter(value as 'all' | AircraftType)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Aircraft Type" />
             </SelectTrigger>
             <SelectContent className="z-50">
               <SelectGroup>
                 <SelectItem value="all">All Aircraft</SelectItem>
-                <SelectItem value="A380">A380</SelectItem>
-                <SelectItem value="777">777</SelectItem>
+                {AIRCRAFT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -125,10 +146,7 @@ export default function Home() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    setStartDate(undefined);
-                    setEndDate(undefined);
-                  }}
+                  onClick={handleClearDates}
                   className="h-auto py-1 px-2 text-xs"
                 >
                   <XIcon className="mr-1 h-3 w-3" />
@@ -171,15 +189,17 @@ export default function Home() {
           </div>
         </div>
         <div>
-          {filteredFlights.map((flight, idx) => {
-            const airport = airports.find(a => a.id === flight.originAirport);
-            const destAirport = airports.find(a => a.id === flight.destinationAirport);
+          {filteredFlights.map((flight) => {
+            const airport = airportMap.get(flight.originAirport);
+            const destAirport = airportMap.get(flight.destinationAirport);
             const flightId = `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`;
             const isSelected = selectedFlight === flightId;
             
+            if (!airport || !destAirport) return null;
+            
             return (
               <div
-                key={idx}
+                key={flightId}
                 onClick={() => setSelectedFlight(isSelected ? null : flightId)}
                 className={`py-3 px-4 border-b border-gray-100 cursor-pointer transition-colors duration-200 ${
                   isSelected ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'
@@ -189,14 +209,14 @@ export default function Home() {
                   {flight.flightNumber}
                 </div>
                 <div className="text-[13px] text-gray-600 mb-1 flex items-center gap-1.5">
-                  <span className={`fi fi-${airport?.country.toLowerCase()} text-base`}></span>
-                  <span>{airport?.city}</span>
+                  <span className={`fi fi-${airport.country.toLowerCase()} text-base`}></span>
+                  <span>{airport.city}</span>
                   <span>→</span>
-                  <span className={`fi fi-${destAirport?.country.toLowerCase()} text-base`}></span>
-                  <span>{destAirport?.city}</span>
+                  <span className={`fi fi-${destAirport.country.toLowerCase()} text-base`}></span>
+                  <span>{destAirport.city}</span>
                 </div>
                 <div className="text-xs text-gray-400">
-                  {flight.departureDateTime.toISOString().split('T')[0]} • {flight.departureDateTime.toTimeString().slice(0, 5)} • {flight.planeType}
+                  {format(flight.departureDateTime, 'yyyy-MM-dd')} • {format(flight.departureDateTime, 'HH:mm')} • {flight.planeType}
                 </div>
               </div>
             );
@@ -244,8 +264,8 @@ export default function Home() {
           {/* Draw airport markers */}
           {airportMarkers.map((airport) => (
             <CircleMarker
-              key={airport!.id}
-              center={[airport!.coords[0], airport!.coords[1]]}
+              key={airport.id}
+              center={[airport.coords[0], airport.coords[1]]}
               radius={6}
               fillColor="#ef4444"
               fillOpacity={0.8}
@@ -253,8 +273,8 @@ export default function Home() {
               weight={2}
             >
               <Popup>
-                <strong>{airport!.city}</strong><br />
-                {airport!.name} ({airport!.id})
+                <strong>{airport.city}</strong><br />
+                {airport.name} ({airport.id})
               </Popup>
             </CircleMarker>
           ))}
