@@ -92,6 +92,56 @@ export default function Home() {
       .filter((airport): airport is Airport => airport !== undefined);
   }, [usedAirports, airportMap]);
 
+  // Calculate route frequencies for color coding
+  const { routeFrequencies, maxFrequency, uniqueRoutes } = useMemo(() => {
+    const frequencyMap = new Map<string, number>();
+    const routeSet = new Set<string>();
+    
+    filteredFlights.forEach(flight => {
+      const routeKey = `${flight.originAirport}-${flight.destinationAirport}`;
+      frequencyMap.set(routeKey, (frequencyMap.get(routeKey) || 0) + 1);
+      routeSet.add(routeKey);
+    });
+    
+    const max = Math.max(...Array.from(frequencyMap.values()), 1);
+    
+    return {
+      routeFrequencies: frequencyMap,
+      maxFrequency: max,
+      uniqueRoutes: routeSet
+    };
+  }, [filteredFlights]);
+
+  // Helper function to get color and weight based on frequency
+  const getRouteStyle = useCallback((originAirport: string, destinationAirport: string, isSelected: boolean) => {
+    if (isSelected) {
+      return {
+        color: "#ef4444",
+        weight: 5,
+        opacity: 1
+      };
+    }
+    
+    const routeKey = `${originAirport}-${destinationAirport}`;
+    const frequency = routeFrequencies.get(routeKey) || 1;
+    const normalizedFrequency = frequency / maxFrequency;
+    
+    // Color gradient from light blue (infrequent) to dark blue (frequent)
+    const opacity = 0.3 + (normalizedFrequency * 0.5); // 0.3 to 0.8
+    const weight = 1 + (normalizedFrequency * 3); // 1 to 4
+    
+    // Use a color gradient based on frequency
+    const hue = 210; // Blue hue
+    const saturation = 70 + (normalizedFrequency * 30); // 70% to 100%
+    const lightness = 65 - (normalizedFrequency * 25); // 65% to 40% (darker = more frequent)
+    
+    return {
+      color: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+      weight: weight,
+      opacity: opacity
+    };
+  }, [routeFrequencies, maxFrequency]);
+
   // Clear dates handler
   const handleClearDates = useCallback(() => {
     setStartDate(undefined);
@@ -237,26 +287,29 @@ export default function Home() {
           />
           
           {/* Draw flight routes */}
-          {filteredFlights.map((flight) => {
-            const from = airportMap.get(flight.originAirport);
-            const to = airportMap.get(flight.destinationAirport);
+          {Array.from(uniqueRoutes).map((routeKey) => {
+            const [originAirport, destinationAirport] = routeKey.split('-');
+            const from = airportMap.get(originAirport);
+            const to = airportMap.get(destinationAirport);
             if (!from || !to) return null;
             
-            const flightId = `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`;
-            const isSelected = selectedFlight === flightId;
+            // Check if any flight on this route is selected
+            const isRouteSelected = filteredFlights.some(flight => 
+              flight.originAirport === originAirport && 
+              flight.destinationAirport === destinationAirport &&
+              selectedFlight === `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`
+            );
+            
+            const style = getRouteStyle(originAirport, destinationAirport, isRouteSelected);
             
             return (
               <Polyline
-                key={flightId}
+                key={routeKey}
                 positions={[
                   [from.coords[0], from.coords[1]],
                   [to.coords[0], to.coords[1]],
                 ]}
-                pathOptions={{
-                  color: isSelected ? "#ef4444" : "#3b82f6",
-                  weight: isSelected ? 4 : 2,
-                  opacity: isSelected ? 1 : 0.6,
-                }}
+                pathOptions={style}
               />
             );
           })}
