@@ -1,6 +1,8 @@
 import type { Route } from "./+types/stats";
 import { flights } from '../data/flights';
 import { airports } from '../data/airports';
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../components/ui/chart";
 import 'flag-icons/css/flag-icons.min.css';
 
 export function meta({}: Route.MetaArgs) {
@@ -56,6 +58,53 @@ export default function Stats() {
   const topCities = Array.from(cityCount.values())
     .sort((a, b) => b.count - a.count);
 
+  // Calculate top airports
+  const airportCount = new Map<string, { id: string; name: string; city: string; country: string; count: number }>();
+  flights.forEach(flight => {
+    const destAirport = airports.find(a => a.id === flight.destinationAirport);
+    if (destAirport) {
+      const existing = airportCount.get(destAirport.id);
+      if (existing) {
+        existing.count++;
+      } else {
+        airportCount.set(destAirport.id, {
+          id: destAirport.id,
+          name: destAirport.name,
+          city: destAirport.city,
+          country: destAirport.country,
+          count: 1
+        });
+      }
+    }
+  });
+  const topAirports = Array.from(airportCount.values())
+    .sort((a, b) => b.count - a.count);
+
+  // Calculate flights per month
+  const monthlyFlights = new Map<string, number>();
+  flights.forEach(flight => {
+    const monthKey = `${flight.departureDateTime.getFullYear()}-${String(flight.departureDateTime.getMonth() + 1).padStart(2, '0')}`;
+    monthlyFlights.set(monthKey, (monthlyFlights.get(monthKey) || 0) + 1);
+  });
+  
+  const chartData = Array.from(monthlyFlights.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([month, count]) => {
+      const [year, monthNum] = month.split('-');
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return {
+        month: `${monthNames[parseInt(monthNum) - 1]} ${year}`,
+        flights: count
+      };
+    });
+
+  const chartConfig = {
+    flights: {
+      label: "Flights",
+      color: "#3b82f6",
+    },
+  };
+
   // Total stats
   const totalFlights = flights.length;
   const uniqueCountries = new Set(flights.map(f => {
@@ -87,8 +136,29 @@ export default function Stats() {
         </div>
       </div>
 
+      {/* Flights Per Month Chart */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-900">Flights Per Month</h2>
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis 
+              dataKey="month" 
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="flights" fill="var(--color-flights)" radius={4} />
+          </BarChart>
+        </ChartContainer>
+      </div>
+
       {/* Statistics Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Countries */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h2 className="text-xl font-bold mb-4 text-gray-900">Top Countries</h2>
@@ -133,6 +203,24 @@ export default function Stats() {
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">{aircraft.type}</div>
                   <div className="text-sm text-gray-600">{aircraft.count} flights</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Most Visited Airports */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Most Visited Airports</h2>
+          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {topAirports.map((airport, idx) => (
+              <div key={airport.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                <div className="text-lg font-bold text-gray-400 min-w-[24px]">{idx + 1}</div>
+                <span className={`fi fi-${airport.country.toLowerCase()} text-xl`}></span>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">{airport.id}</div>
+                  <div className="text-sm text-gray-600">{airport.city}</div>
+                  <div className="text-xs text-gray-500">{airport.count} flights</div>
                 </div>
               </div>
             ))}

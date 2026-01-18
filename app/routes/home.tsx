@@ -27,7 +27,7 @@ export default function Home() {
 
   // Sort flights by date, most recent first
   const sortedFlights = [...flights].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    return b.departureDateTime.getTime() - a.departureDateTime.getTime();
   });
 
   if (!isClient || !reactLeaflet) {
@@ -74,7 +74,7 @@ export default function Home() {
           {sortedFlights.map((flight, idx) => {
             const airport = airports.find(a => a.id === flight.originAirport);
             const destAirport = airports.find(a => a.id === flight.destinationAirport);
-            const flightId = `${flight.flightNumber}-${flight.date}`;
+            const flightId = `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`;
             const isSelected = selectedFlight === flightId;
             
             return (
@@ -96,7 +96,7 @@ export default function Home() {
                   <span>{destAirport?.city}</span>
                 </div>
                 <div className="text-xs text-gray-400">
-                  {flight.date} • {flight.departureTime} • {flight.planeType}
+                  {flight.departureDateTime.toISOString().split('T')[0]} • {flight.departureDateTime.toTimeString().slice(0, 5)} • {flight.planeType}
                 </div>
               </div>
             );
@@ -122,7 +122,7 @@ export default function Home() {
             const to = airportMap.get(flight.destinationAirport);
             if (!from || !to) return null;
             
-            const flightId = `${flight.flightNumber}-${flight.date}`;
+            const flightId = `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`;
             const isSelected = selectedFlight === flightId;
             
             return (

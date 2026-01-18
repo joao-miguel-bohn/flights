@@ -1,8 +1,6 @@
 export interface Flight {
-  date: string; // ISO date format
-  departureTime: string; // HH:mm format
-  arrivalDate: string; // ISO date format
-  arrivalTime: string; // HH:mm format
+  departureDateTime: Date;
+  arrivalDateTime: Date;
   flightNumber: string;
   originAirport: string; // IATA code reference (e.g., "DXB")
   destinationAirport: string; // IATA code reference (e.g., "LHR")

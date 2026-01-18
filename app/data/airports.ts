@@ -218,6 +218,69 @@ export const airports: Airport[] = [
     name: 'John F. Kennedy International Airport',
     coords: [40.6413, -73.7781],
   },
+  {
+    id: 'MAN',
+    city: 'Manchester',
+    country: 'GB', // United Kingdom
+    name: 'Manchester Airport',
+    coords: [53.3537, -2.2750],
+  },
+  {
+    id: 'MXP',
+    city: 'Milan',
+    country: 'IT', // Italy
+    name: 'Milan Malpensa Airport',
+    coords: [45.6306, 8.7281],
+  },
+  {
+    id: 'PEW',
+    city: 'Peshawar',
+    country: 'PK', // Pakistan
+    name: 'Bacha Khan International Airport',
+    coords: [33.9939, 71.5146],
+  },
+  {
+    id: 'CPH',
+    city: 'Copenhagen',
+    country: 'DK', // Denmark
+    name: 'Copenhagen Airport',
+    coords: [55.6180, 12.6508],
+  },
+  {
+    id: 'PRG',
+    city: 'Prague',
+    country: 'CZ', // Czech Republic
+    name: 'Václav Havel Airport Prague',
+    coords: [50.1008, 14.2600],
+  },
+  {
+    id: 'KWI',
+    city: 'Kuwait City',
+    country: 'KW', // Kuwait
+    name: 'Kuwait International Airport',
+    coords: [29.2267, 47.9689],
+  },
+  {
+    id: 'AMS',
+    city: 'Amsterdam',
+    country: 'NL', // Netherlands
+    name: 'Amsterdam Airport Schiphol',
+    coords: [52.3105, 4.7683],
+  },
+  {
+    id: 'HAM',
+    city: 'Hamburg',
+    country: 'DE', // Germany
+    name: 'Hamburg Airport',
+    coords: [53.6304, 9.9882],
+  },
+  {
+    id: 'SEA',
+    city: 'Seattle',
+    country: 'US', // United States
+    name: 'Seattle-Tacoma International Airport',
+    coords: [47.4502, -122.3088],
+  },
 ];
 
 // Helper function to get airport by ID
