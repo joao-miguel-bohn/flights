@@ -3,5 +3,5 @@ export interface Airport {
   city: string;
   country: string; // ISO 3166-1 alpha-2 code (e.g., "AE", "GB", "US")
   name: string;
-  coords: [number, number]; // [latitude, longitude]
+  coords: readonly [number, number]; // [latitude, longitude]
 }

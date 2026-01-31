@@ -1,6 +1,6 @@
 import type { Airport } from '../types/airport';
 
-export const airports: Airport[] = [
+export const airports = [
   {
     id: 'DXB',
     city: 'Dubai',
@@ -281,9 +281,32 @@ export const airports: Airport[] = [
     name: 'Seattle-Tacoma International Airport',
     coords: [47.4502, -122.3088],
   },
-];
+  {
+    id: 'CAN',
+    city: 'Guangzhou',
+    country: 'CN', // China
+    name: 'Guangzhou Baiyun International Airport',
+    coords: [23.3924, 113.2988],
+  },
+  {
+    id: 'LAX',
+    city: 'Los Angeles',
+    country: 'US', // United States
+    name: 'Los Angeles International Airport',
+    coords: [33.9416, -118.4085],
+  },
+  {
+    id: 'SIN',
+    city: 'Singapore',
+    country: 'SG', // Singapore
+    name: 'Singapore Changi Airport',
+    coords: [1.3644, 103.9915],
+  },
+] as const;
+
+export type AirportCode = (typeof airports)[number]['id'];
 
 // Helper function to get airport by ID
-export const getAirportById = (id: string): Airport | undefined => {
+export const getAirportById = (id: AirportCode): Airport | undefined => {
   return airports.find(airport => airport.id === id);
 };
