@@ -117,58 +117,63 @@ export default function Stats() {
   }).filter(Boolean)).size;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Flight Statistics</h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Flight Statistics</h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-          <div className="text-5xl font-bold text-blue-500 mb-2">{totalFlights}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+        <div className="bg-white border rounded-xl p-4 md:p-6 text-center">
+          <div className="text-4xl md:text-5xl font-bold text-blue-500 mb-2">{totalFlights}</div>
           <div className="text-sm text-gray-600 font-medium">Total Flights</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-          <div className="text-5xl font-bold text-blue-500 mb-2">{uniqueCountries}</div>
+        <div className="bg-white border rounded-xl p-4 md:p-6 text-center">
+          <div className="text-4xl md:text-5xl font-bold text-blue-500 mb-2">{uniqueCountries}</div>
           <div className="text-sm text-gray-600 font-medium">Countries Visited</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-          <div className="text-5xl font-bold text-blue-500 mb-2">{uniqueCities}</div>
+        <div className="bg-white border rounded-xl p-4 md:p-6 text-center">
+          <div className="text-4xl md:text-5xl font-bold text-blue-500 mb-2">{uniqueCities}</div>
           <div className="text-sm text-gray-600 font-medium">Cities Visited</div>
         </div>
       </div>
 
       {/* Flights Per Month Chart */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Flights Per Month</h2>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis 
-              dataKey="month" 
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-            />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="flights" fill="var(--color-flights)" radius={4} />
-          </BarChart>
-        </ChartContainer>
+      <div className="bg-white border rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+        <h2 className="text-lg md:text-xl font-bold mb-4">Flights Per Month</h2>
+        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+          <div className="min-w-[500px]">
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis 
+                  dataKey="month" 
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  fontSize={12}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="flights" fill="var(--color-flights)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+          </div>
+        </div>
       </div>
 
       {/* Statistics Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Top Countries */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Top Countries</h2>
-          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="bg-white border rounded-xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Top Countries</h2>
+          <div className="flex flex-col gap-2 max-h-[400px] md:max-h-[500px] overflow-y-auto">
             {topCountries.map((country, idx) => (
-              <div key={country.name} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="text-lg font-bold text-gray-400 min-w-[24px]">{idx + 1}</div>
+              <div key={country.name} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-gray-50">
+                <div className="text-lg font-bold text-gray-400 w-6">{idx + 1}</div>
                 <span className={`fi fi-${country.name.toLowerCase()} text-xl`}></span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{country.name}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{country.name}</div>
                   <div className="text-sm text-gray-600">{country.count} flights</div>
                 </div>
               </div>
@@ -177,15 +182,15 @@ export default function Stats() {
         </div>
 
         {/* Top Cities */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Top Cities</h2>
-          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="bg-white border rounded-xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Top Cities</h2>
+          <div className="flex flex-col gap-2 max-h-[400px] md:max-h-[500px] overflow-y-auto">
             {topCities.map((city, idx) => (
-              <div key={city.name} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="text-lg font-bold text-gray-400 min-w-[24px]">{idx + 1}</div>
+              <div key={city.name} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-gray-50">
+                <div className="text-lg font-bold text-gray-400 w-6">{idx + 1}</div>
                 <span className={`fi fi-${city.country.toLowerCase()} text-xl`}></span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{city.name}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{city.name}</div>
                   <div className="text-sm text-gray-600">{city.count} flights</div>
                 </div>
               </div>
@@ -194,14 +199,14 @@ export default function Stats() {
         </div>
 
         {/* Top Aircraft */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Aircraft Types</h2>
-          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="bg-white border rounded-xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Aircraft Types</h2>
+          <div className="flex flex-col gap-2 max-h-[400px] md:max-h-[500px] overflow-y-auto">
             {topAircraft.map((aircraft, idx) => (
-              <div key={aircraft.type} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="text-lg font-bold text-gray-400 min-w-[24px]">{idx + 1}</div>
+              <div key={aircraft.type} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-gray-50">
+                <div className="text-lg font-bold text-gray-400 w-6">{idx + 1}</div>
                 <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{aircraft.type}</div>
+                  <div className="font-semibold">{aircraft.type}</div>
                   <div className="text-sm text-gray-600">{aircraft.count} flights</div>
                 </div>
               </div>
@@ -210,16 +215,16 @@ export default function Stats() {
         </div>
 
         {/* Most Visited Airports */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Most Visited Airports</h2>
-          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="bg-white border rounded-xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Most Visited Airports</h2>
+          <div className="flex flex-col gap-2 max-h-[400px] md:max-h-[500px] overflow-y-auto">
             {topAirports.map((airport, idx) => (
-              <div key={airport.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="text-lg font-bold text-gray-400 min-w-[24px]">{idx + 1}</div>
+              <div key={airport.id} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-gray-50">
+                <div className="text-lg font-bold text-gray-400 w-6">{idx + 1}</div>
                 <span className={`fi fi-${airport.country.toLowerCase()} text-xl`}></span>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{airport.id}</div>
-                  <div className="text-sm text-gray-600">{airport.city}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{airport.id}</div>
+                  <div className="text-sm text-gray-600 truncate">{airport.city}</div>
                   <div className="text-xs text-gray-500">{airport.count} flights</div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { flights } from '../data/flights';
-import { airports } from '../data/airports';
+import { airports, type AirportCode } from '../data/airports';
 import type { Route } from "./+types/home";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -9,7 +9,6 @@ import { Calendar } from '../components/ui/calendar';
 import { format, startOfDay } from 'date-fns';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import 'flag-icons/css/flag-icons.min.css';
-import type { Airport } from '../types/airport';
 import { AIRCRAFT_TYPES, type AircraftType } from '../types/flight';
 
 export function meta({}: Route.MetaArgs) {
@@ -41,7 +40,7 @@ export default function Home() {
 
   // Memoize airport lookup map
   const airportMap = useMemo(() => {
-    return new Map(airports.map(a => [a.id, a]));
+    return new Map(airports.map(a => [a.id, a] as const));
   }, []);
 
   // Sort flights by date, most recent first
@@ -78,7 +77,7 @@ export default function Home() {
 
   // Memoize used airports for markers
   const usedAirports = useMemo(() => {
-    const airportSet = new Set<string>();
+    const airportSet = new Set<AirportCode>();
     filteredFlights.forEach(flight => {
       airportSet.add(flight.originAirport);
       airportSet.add(flight.destinationAirport);
@@ -89,7 +88,7 @@ export default function Home() {
   const airportMarkers = useMemo(() => {
     return Array.from(usedAirports)
       .map(code => airportMap.get(code))
-      .filter((airport): airport is Airport => airport !== undefined);
+      .filter((airport) => airport !== undefined);
   }, [usedAirports, airportMap]);
 
   // Calculate route frequencies for color coding
@@ -288,7 +287,7 @@ export default function Home() {
           
           {/* Draw flight routes */}
           {Array.from(uniqueRoutes).map((routeKey) => {
-            const [originAirport, destinationAirport] = routeKey.split('-');
+            const [originAirport, destinationAirport] = routeKey.split('-') as [AirportCode, AirportCode];
             const from = airportMap.get(originAirport);
             const to = airportMap.get(destinationAirport);
             if (!from || !to) return null;
@@ -315,7 +314,7 @@ export default function Home() {
           })}
 
           {/* Draw airport markers */}
-          {airportMarkers.map((airport) => (
+          {airportMarkers.map((airport) => airport && (
             <CircleMarker
               key={airport.id}
               center={[airport.coords[0], airport.coords[1]]}
