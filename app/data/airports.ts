@@ -302,6 +302,27 @@ export const airports = [
     name: 'Singapore Changi Airport',
     coords: [1.3644, 103.9915],
   },
+  {
+    id: 'SFO',
+    city: 'San Francisco',
+    country: 'US', // United States
+    name: 'San Francisco International Airport',
+    coords: [37.6213, -122.3790],
+  },
+  {
+    id: 'ATH',
+    city: 'Athens',
+    country: 'GR', // Greece
+    name: 'Athens International Airport',
+    coords: [37.9364, 23.9445],
+  },
+  {
+    id: 'EWR',
+    city: 'Newark',
+    country: 'US', // United States
+    name: 'Newark Liberty International Airport',
+    coords: [40.6895, -74.1745],
+  },
 ] as const;
 
 export type AirportCode = (typeof airports)[number]['id'];
