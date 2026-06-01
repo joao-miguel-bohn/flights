@@ -323,6 +323,20 @@ export const airports = [
     name: 'Newark Liberty International Airport',
     coords: [40.6895, -74.1745],
   },
+  {
+    id: 'MIA',
+    city: 'Miami',
+    country: 'US', // United States
+    name: 'Miami International Airport',
+    coords: [25.7959, -80.2870],
+  },
+  {
+    id: 'BOG',
+    city: 'Bogotá',
+    country: 'CO', // Colombia
+    name: 'Aeropuerto Internacional El Dorado',
+    coords: [4.7016, -74.1469],
+  },
 ] as const;
 
 export type AirportCode = (typeof airports)[number]['id'];
