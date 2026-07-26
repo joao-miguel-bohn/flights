@@ -337,6 +337,34 @@ export const airports = [
     name: 'Aeropuerto Internacional El Dorado',
     coords: [4.7016, -74.1469],
   },
+  {
+    id: 'BOS',
+    city: 'Boston',
+    country: 'US', // United States
+    name: 'Boston Logan International Airport',
+    coords: [42.3656, -71.0096],
+  },
+  {
+    id: 'MUC',
+    city: 'Munich',
+    country: 'DE', // Germany
+    name: 'Munich Airport',
+    coords: [48.3538, 11.7861],
+  },
+  {
+    id: 'LCA',
+    city: 'Larnaca',
+    country: 'CY', // Cyprus
+    name: 'Larnaca International Airport',
+    coords: [34.8751, 33.6249],
+  },
+  {
+    id: 'MLA',
+    city: 'Luqa',
+    country: 'MT', // Malta
+    name: 'Malta International Airport',
+    coords: [35.8575, 14.4775],
+  },
 ] as const;
 
 export type AirportCode = (typeof airports)[number]['id'];
