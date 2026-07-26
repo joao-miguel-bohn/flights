@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { flights } from '../data/flights';
 import { airports, type AirportCode } from '../data/airports';
 import type { Airport } from '../types/airport';
@@ -54,6 +54,8 @@ export default function Home() {
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [reactMapGl, setReactMapGl] = useState<any>(null);
   const [popupAirport, setPopupAirport] = useState<Airport | null>(null);
+  const [projection, setProjection] = useState<'globe' | 'mercator'>('globe');
+  const mapRef = useRef<any>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
   const [aircraftFilter, setAircraftFilter] = useState<'all' | AircraftType>('all');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -242,6 +244,14 @@ export default function Home() {
     setPopupAirport(null);
   }, [airportMap]);
 
+  const handleToggleProjection = useCallback(() => {
+    setProjection((current) => {
+      const next = current === 'globe' ? 'mercator' : 'globe';
+      mapRef.current?.getMap().setProjection({ type: next });
+      return next;
+    });
+  }, []);
+
   if (!isClient || !reactMapGl) {
     return (
       <div className="h-[96vh] w-full flex overflow-hidden">
@@ -369,8 +379,16 @@ export default function Home() {
       </div>
 
       {/* Map */}
-      <div className="flex-1 h-full">
+      <div className="flex-1 h-full relative">
+        <button
+          onClick={handleToggleProjection}
+          className="absolute bottom-6 left-2.5 z-10 bg-white border border-gray-200 rounded-md px-3 py-1.5 cursor-pointer font-medium text-xs shadow-md"
+        >
+          {projection === 'globe' ? '2D' : 'Globe'}
+        </button>
+
         <MapGL
+          ref={mapRef}
           initialViewState={{ longitude: 55, latitude: 25, zoom: 3 }}
           style={{ height: '100%', width: '100%' }}
           mapStyle={OSM_STYLE}
