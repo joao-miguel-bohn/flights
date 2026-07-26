@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { flights } from '../data/flights';
 import { airports, type AirportCode } from '../data/airports';
+import type { Airport } from '../types/airport';
 import type { Route } from "./+types/home";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -21,10 +22,38 @@ export function meta({}: Route.MetaArgs) {
 // Helper function to normalize dates to start of day
 const normalizeDate = (date: Date): Date => startOfDay(date);
 
+// Raster style pointing at the public OSM tile server, mirroring the previous Leaflet TileLayer.
+const OSM_STYLE = {
+  version: 8,
+  projection: { type: 'globe' },
+  sources: {
+    'osm-tiles': {
+      type: 'raster',
+      tiles: [
+        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      ],
+      tileSize: 256,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+  },
+  layers: [
+    {
+      id: 'osm-tiles',
+      type: 'raster',
+      source: 'osm-tiles',
+      minzoom: 0,
+      maxzoom: 19,
+    },
+  ],
+};
+
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
-  const [reactLeaflet, setReactLeaflet] = useState<any>(null);
+  const [reactMapGl, setReactMapGl] = useState<any>(null);
+  const [popupAirport, setPopupAirport] = useState<Airport | null>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
   const [aircraftFilter, setAircraftFilter] = useState<'all' | AircraftType>('all');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -32,9 +61,9 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-    import('react-leaflet').then((mod) => {
-      import('leaflet/dist/leaflet.css');
-      setReactLeaflet(mod);
+    import('react-map-gl/maplibre').then((mod) => {
+      import('maplibre-gl/dist/maplibre-gl.css');
+      setReactMapGl(mod);
     });
   }, []);
 
@@ -147,7 +176,73 @@ export default function Home() {
     setEndDate(undefined);
   }, []);
 
-  if (!isClient || !reactLeaflet) {
+  // Close the airport popup if its airport drops out of the filtered set
+  useEffect(() => {
+    if (popupAirport && !usedAirports.has(popupAirport.id as AirportCode)) {
+      setPopupAirport(null);
+    }
+  }, [usedAirports, popupAirport]);
+
+  // Build a single GeoJSON FeatureCollection for all routes (MapLibre uses [lng, lat] order)
+  const routesGeoJSON = useMemo(() => {
+    const features = Array.from(uniqueRoutes)
+      .map((routeKey) => {
+        const [originAirport, destinationAirport] = routeKey.split('-') as [AirportCode, AirportCode];
+        const from = airportMap.get(originAirport);
+        const to = airportMap.get(destinationAirport);
+        if (!from || !to) return null;
+
+        const isRouteSelected = filteredFlights.some(flight =>
+          flight.originAirport === originAirport &&
+          flight.destinationAirport === destinationAirport &&
+          selectedFlight === `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`
+        );
+
+        const style = getRouteStyle(originAirport, destinationAirport, isRouteSelected);
+
+        return {
+          type: 'Feature' as const,
+          properties: style,
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: [
+              [from.coords[1], from.coords[0]],
+              [to.coords[1], to.coords[0]],
+            ],
+          },
+        };
+      })
+      .filter((feature) => feature !== null);
+
+    return { type: 'FeatureCollection' as const, features };
+  }, [uniqueRoutes, airportMap, filteredFlights, selectedFlight, getRouteStyle]);
+
+  // Build a GeoJSON FeatureCollection for the airport circle markers
+  const airportsGeoJSON = useMemo(() => {
+    return {
+      type: 'FeatureCollection' as const,
+      features: airportMarkers.map((airport) => ({
+        type: 'Feature' as const,
+        properties: { id: airport.id },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [airport.coords[1], airport.coords[0]],
+        },
+      })),
+    };
+  }, [airportMarkers]);
+
+  const handleMapClick = useCallback((event: any) => {
+    const feature = event.features?.[0];
+    if (feature?.layer?.id === 'airport-circles') {
+      const airport = airportMap.get(feature.properties.id as AirportCode);
+      setPopupAirport(airport ?? null);
+      return;
+    }
+    setPopupAirport(null);
+  }, [airportMap]);
+
+  if (!isClient || !reactMapGl) {
     return (
       <div className="h-[96vh] w-full flex overflow-hidden">
         <div className="p-5">Loading map...</div>
@@ -155,7 +250,7 @@ export default function Home() {
     );
   }
 
-  const { MapContainer, TileLayer, Polyline, CircleMarker, Popup } = reactLeaflet;
+  const { Map: MapGL, Source, Layer, Popup, NavigationControl } = reactMapGl;
 
   return (
     <div className="h-[96vh] w-full flex overflow-hidden relative">
@@ -275,62 +370,55 @@ export default function Home() {
 
       {/* Map */}
       <div className="flex-1 h-full">
-        <MapContainer 
-          center={[25, 55]} 
-          zoom={3} 
+        <MapGL
+          initialViewState={{ longitude: 55, latitude: 25, zoom: 3 }}
           style={{ height: '100%', width: '100%' }}
+          mapStyle={OSM_STYLE}
+          interactiveLayerIds={['airport-circles']}
+          onClick={handleMapClick}
         >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          
+          <NavigationControl position="top-left" showCompass={false} />
+
           {/* Draw flight routes */}
-          {Array.from(uniqueRoutes).map((routeKey) => {
-            const [originAirport, destinationAirport] = routeKey.split('-') as [AirportCode, AirportCode];
-            const from = airportMap.get(originAirport);
-            const to = airportMap.get(destinationAirport);
-            if (!from || !to) return null;
-            
-            // Check if any flight on this route is selected
-            const isRouteSelected = filteredFlights.some(flight => 
-              flight.originAirport === originAirport && 
-              flight.destinationAirport === destinationAirport &&
-              selectedFlight === `${flight.flightNumber}-${flight.departureDateTime.toISOString()}`
-            );
-            
-            const style = getRouteStyle(originAirport, destinationAirport, isRouteSelected);
-            
-            return (
-              <Polyline
-                key={routeKey}
-                positions={[
-                  [from.coords[0], from.coords[1]],
-                  [to.coords[0], to.coords[1]],
-                ]}
-                pathOptions={style}
-              />
-            );
-          })}
+          <Source id="routes" type="geojson" data={routesGeoJSON}>
+            <Layer
+              id="route-lines"
+              type="line"
+              paint={{
+                'line-color': ['get', 'color'],
+                'line-width': ['get', 'weight'],
+                'line-opacity': ['get', 'opacity'],
+              }}
+            />
+          </Source>
 
           {/* Draw airport markers */}
-          {airportMarkers.map((airport) => airport && (
-            <CircleMarker
-              key={airport.id}
-              center={[airport.coords[0], airport.coords[1]]}
-              radius={6}
-              fillColor="#ef4444"
-              fillOpacity={0.8}
-              color="#fff"
-              weight={2}
+          <Source id="airports" type="geojson" data={airportsGeoJSON}>
+            <Layer
+              id="airport-circles"
+              type="circle"
+              paint={{
+                'circle-radius': 6,
+                'circle-color': '#ef4444',
+                'circle-opacity': 0.8,
+                'circle-stroke-color': '#fff',
+                'circle-stroke-width': 2,
+              }}
+            />
+          </Source>
+
+          {popupAirport && (
+            <Popup
+              longitude={popupAirport.coords[1]}
+              latitude={popupAirport.coords[0]}
+              onClose={() => setPopupAirport(null)}
+              closeOnClick={false}
             >
-              <Popup>
-                <strong>{airport.city}</strong><br />
-                {airport.name} ({airport.id})
-              </Popup>
-            </CircleMarker>
-          ))}
-        </MapContainer>
+              <strong>{popupAirport.city}</strong><br />
+              {popupAirport.name} ({popupAirport.id})
+            </Popup>
+          )}
+        </MapGL>
       </div>
 
       <style>{`
@@ -349,7 +437,7 @@ export default function Home() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
           }
           
-          .leaflet-container {
+          .maplibregl-map {
             z-index: 0 !important;
           }
           
