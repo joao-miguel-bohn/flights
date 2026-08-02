@@ -116,12 +116,6 @@ export default function Home() {
     return airportSet;
   }, [filteredFlights]);
 
-  const airportMarkers = useMemo(() => {
-    return Array.from(usedAirports)
-      .map(code => airportMap.get(code))
-      .filter((airport) => airport !== undefined);
-  }, [usedAirports, airportMap]);
-
   // Calculate route frequencies for color coding
   const { routeFrequencies, maxFrequency, uniqueRoutes } = useMemo(() => {
     const frequencyMap = new Map<string, number>();
@@ -178,13 +172,6 @@ export default function Home() {
     setEndDate(undefined);
   }, []);
 
-  // Close the airport popup if its airport drops out of the filtered set
-  useEffect(() => {
-    if (popupAirport && !usedAirports.has(popupAirport.id as AirportCode)) {
-      setPopupAirport(null);
-    }
-  }, [usedAirports, popupAirport]);
-
   // Build a single GeoJSON FeatureCollection for all routes (MapLibre uses [lng, lat] order)
   const routesGeoJSON = useMemo(() => {
     const features = Array.from(uniqueRoutes)
@@ -219,20 +206,21 @@ export default function Home() {
     return { type: 'FeatureCollection' as const, features };
   }, [uniqueRoutes, airportMap, filteredFlights, selectedFlight, getRouteStyle]);
 
-  // Build a GeoJSON FeatureCollection for the airport circle markers
+  // Build a GeoJSON FeatureCollection for the airport circle markers.
+  // Every known airport is shown, even ones with no flight yet, styled by visited state.
   const airportsGeoJSON = useMemo(() => {
     return {
       type: 'FeatureCollection' as const,
-      features: airportMarkers.map((airport) => ({
+      features: airports.map((airport) => ({
         type: 'Feature' as const,
-        properties: { id: airport.id },
+        properties: { id: airport.id, visited: usedAirports.has(airport.id) },
         geometry: {
           type: 'Point' as const,
           coordinates: [airport.coords[1], airport.coords[0]],
         },
       })),
     };
-  }, [airportMarkers]);
+  }, [usedAirports]);
 
   const handleMapClick = useCallback((event: any) => {
     const feature = event.features?.[0];
@@ -416,11 +404,11 @@ export default function Home() {
               id="airport-circles"
               type="circle"
               paint={{
-                'circle-radius': 6,
-                'circle-color': '#ef4444',
-                'circle-opacity': 0.8,
+                'circle-radius': ['case', ['get', 'visited'], 6, 5],
+                'circle-color': ['case', ['get', 'visited'], '#ef4444', '#2563eb'],
+                'circle-opacity': ['case', ['get', 'visited'], 0.9, 0.85],
                 'circle-stroke-color': '#fff',
-                'circle-stroke-width': 2,
+                'circle-stroke-width': ['case', ['get', 'visited'], 2, 1.5],
               }}
             />
           </Source>
