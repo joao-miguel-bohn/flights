@@ -31,6 +31,10 @@ function maplibreGlWorkerAssets(): Plugin {
       });
     },
     generateBundle() {
+      // Only the client build serves these as static assets; the SSR/Worker build
+      // never imports maplibre-gl (it's confined to a *.client.tsx component), so
+      // emitting them there too would just bloat the deployed Worker for nothing.
+      if (this.environment?.name !== "client") return;
       for (const file of files) {
         this.emitFile({
           type: "asset",
