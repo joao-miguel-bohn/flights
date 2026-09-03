@@ -71,8 +71,8 @@ export default function Home() {
     Promise.all([
       import('react-map-gl/maplibre'),
       import('maplibre-gl'),
+      import('maplibre-gl/dist/maplibre-gl.css'),
     ]).then(([mod, maplibregl]) => {
-      import('maplibre-gl/dist/maplibre-gl.css');
       maplibregl.setWorkerUrl(MAPLIBRE_WORKER_URL);
       setReactMapGl(mod);
     });
