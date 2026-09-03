@@ -44,38 +44,24 @@ npm run build
 
 ## Deployment
 
-### Docker Deployment
+This app runs on [Cloudflare Workers](https://developers.cloudflare.com/workers/) via the [Cloudflare Vite plugin](https://developers.cloudflare.com/workers/vite-plugin/).
 
-To build and run using Docker:
+Preview the production build locally (runs the actual Worker via Miniflare):
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+npm run preview
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+Deploy to Cloudflare:
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
+```bash
+npm run deploy
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+
+If your Worker config (`wrangler.json`) changes, regenerate the runtime types with:
+
+```bash
+npm run cf-typegen
 ```
 
 ## Styling
