@@ -21,7 +21,7 @@ A modern, production-ready template for building full-stack React applications u
 Install the dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Development
@@ -29,7 +29,7 @@ npm install
 Start the development server with HMR:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Your application will be available at `http://localhost:5173`.
@@ -39,7 +39,7 @@ Your application will be available at `http://localhost:5173`.
 Create a production build:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## Deployment
@@ -49,19 +49,19 @@ This app runs on [Cloudflare Workers](https://developers.cloudflare.com/workers/
 Preview the production build locally (runs the actual Worker via Miniflare):
 
 ```bash
-npm run preview
+pnpm run preview
 ```
 
 Deploy to Cloudflare:
 
 ```bash
-npm run deploy
+pnpm run deploy
 ```
 
 If your Worker config (`wrangler.json`) changes, regenerate the runtime types with:
 
 ```bash
-npm run cf-typegen
+pnpm run cf-typegen
 ```
 
 ## Styling
