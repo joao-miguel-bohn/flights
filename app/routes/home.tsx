@@ -12,6 +12,11 @@ import { CalendarIcon, XIcon } from 'lucide-react';
 import 'flag-icons/css/flag-icons.min.css';
 import { AIRCRAFT_TYPES, type AircraftType } from '../types/flight';
 
+// Served by the maplibreGlWorkerAssets Vite plugin (vite.config.ts), which copies
+// maplibre-gl's worker files from node_modules to this fixed path so the bundler's
+// dependency optimizer/rollup step doesn't need to statically detect the worker.
+const MAPLIBRE_WORKER_URL = '/maplibre-gl-worker.mjs';
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Flight Routes Map" },
@@ -63,8 +68,12 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-    import('react-map-gl/maplibre').then((mod) => {
+    Promise.all([
+      import('react-map-gl/maplibre'),
+      import('maplibre-gl'),
+    ]).then(([mod, maplibregl]) => {
       import('maplibre-gl/dist/maplibre-gl.css');
+      maplibregl.setWorkerUrl(MAPLIBRE_WORKER_URL);
       setReactMapGl(mod);
     });
   }, []);
