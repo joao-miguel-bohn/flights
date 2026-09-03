@@ -14,7 +14,10 @@ const require = createRequire(import.meta.url);
 // This copies the worker script and its shared chunk from node_modules to a fixed
 // root path, which home.tsx points maplibregl.setWorkerUrl() at.
 function maplibreGlWorkerAssets(): Plugin {
-  const files = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+  const baseFiles = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+  // Include the .map companions too: wrangler's upload_source_maps rejects any
+  // attached module whose `//# sourceMappingURL` comment points at a missing file.
+  const files = baseFiles.flatMap((f) => [f, `${f}.map`]);
   const distDir = path.dirname(require.resolve("maplibre-gl/dist/maplibre-gl-worker.mjs"));
 
   return {
