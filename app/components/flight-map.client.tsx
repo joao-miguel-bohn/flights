@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { AirportCode } from '../data/airports';
 import type { Airport } from '../types/airport';
 
@@ -7,11 +8,6 @@ import type { Airport } from '../types/airport';
 // bundle entirely, since the map only ever renders in the browser. Without it, the
 // map libraries end up bundled into the deployed Cloudflare Worker for no reason,
 // even though this code never runs server-side.
-
-// Served by the maplibreGlWorkerAssets Vite plugin (vite.config.ts), which copies
-// maplibre-gl's worker files from node_modules to this fixed path so the bundler's
-// dependency optimizer/rollup step doesn't need to statically detect the worker.
-const MAPLIBRE_WORKER_URL = '/maplibre-gl-worker.mjs';
 
 // Raster style pointing at the public OSM tile server, mirroring the previous Leaflet TileLayer.
 const OSM_STYLE = {
@@ -58,7 +54,7 @@ export function FlightMap({ routesGeoJSON, airportsGeoJSON, airportMap }: Flight
       import('maplibre-gl'),
       import('maplibre-gl/dist/maplibre-gl.css'),
     ]).then(([mod, maplibregl]) => {
-      maplibregl.setWorkerUrl(MAPLIBRE_WORKER_URL);
+      maplibregl.setWorkerUrl(maplibreWorkerUrl);
       setReactMapGl(mod);
     });
   }, []);
