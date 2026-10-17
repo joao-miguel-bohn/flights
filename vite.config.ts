@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { reactRouter } from "@react-router/dev/vite";
@@ -15,10 +15,12 @@ const require = createRequire(import.meta.url);
 // root path, which home.tsx points maplibregl.setWorkerUrl() at.
 function maplibreGlWorkerAssets(): Plugin {
   const baseFiles = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+  const distDir = path.dirname(require.resolve("maplibre-gl/dist/maplibre-gl-worker.mjs"));
   // Include the .map companions too: wrangler's upload_source_maps rejects any
   // attached module whose `//# sourceMappingURL` comment points at a missing file.
-  const files = baseFiles.flatMap((f) => [f, `${f}.map`]);
-  const distDir = path.dirname(require.resolve("maplibre-gl/dist/maplibre-gl-worker.mjs"));
+  // Not every file ships one (maplibre-gl-shared.mjs has none since 6.13), so only
+  // copy the ones that exist.
+  const files = baseFiles.flatMap((f) => [f, `${f}.map`]).filter((f) => existsSync(path.join(distDir, f)));
 
   return {
     name: "maplibre-gl-worker-assets",
